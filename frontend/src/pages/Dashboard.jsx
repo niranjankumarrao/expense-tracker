@@ -19,7 +19,7 @@ const Dashboard = () => {
   }, []);
 
   const fetchTransactions = async () => {
-    const res = await axios.get("http://expense-tracker-icua.onrender.com/api/transactions", {
+    const res = await axios.get("https://expense-tracker-icua.onrender.com/api/transactions", {
       headers: { Authorization: `Bearer ${token}` }
     });
     setTransactions(res.data);
@@ -27,7 +27,7 @@ const Dashboard = () => {
 
   const fetchSummary = async () => {
     const res = await axios.get(
-      "http://expense-tracker-icua.onrender.com/api/transactions/summary/data",
+      "https://expense-tracker-icua.onrender.com/api/transactions/summary/data",
       { headers: { Authorization: `Bearer ${token}` } }
     );
     setSummary(res.data);
@@ -42,7 +42,7 @@ const Dashboard = () => {
     const newTransaction = { title, amount, category, date, notes };
 
     const res = await axios.post(
-      "http://expense-tracker-icua.onrender.com/api/transactions",
+      "https://expense-tracker-icua.onrender.com/api/transactions",
       newTransaction,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -57,7 +57,7 @@ const Dashboard = () => {
   };
 
   const deleteTransaction = async (id) => {
-    await axios.delete(`http://expense-tracker-icua.onrender.com/api/transactions/${id}`, {
+    await axios.delete(`https://expense-tracker-icua.onrender.com/api/transactions/${id}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
