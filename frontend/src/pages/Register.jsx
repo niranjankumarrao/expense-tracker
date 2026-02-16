@@ -15,7 +15,7 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://expense-tracker-icua.onrender.com/api/auth/register", form);
+      await axios.post("https://expense-tracker-icua.onrender.com/api/auth/register", form);
       alert("User registered successfully");
     } catch (err) {
       alert("Registration failed");
