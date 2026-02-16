@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+
+const API = "https://expense-tracker-icua.onrender.com";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   const [transactions, setTransactions] = useState([]);
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -13,24 +18,44 @@ const Dashboard = () => {
 
   const token = localStorage.getItem("token");
 
+  // redirect if not logged in
   useEffect(() => {
-    fetchTransactions();
-    fetchSummary();
+    if (!token) {
+      navigate("/login");
+    } else {
+      fetchTransactions();
+      fetchSummary();
+    }
   }, []);
 
+  const authHeader = {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  };
+
   const fetchTransactions = async () => {
-    const res = await axios.get("https://expense-tracker-icua.onrender.com/api/transactions", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setTransactions(res.data);
+    try {
+      const res = await axios.get(`${API}/api/transactions`, authHeader);
+      setTransactions(res.data);
+    } catch (error) {
+      console.error("Fetch transactions error:", error);
+      alert("Session expired. Please login again.");
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
   };
 
   const fetchSummary = async () => {
-    const res = await axios.get(
-      "https://expense-tracker-icua.onrender.com/api/transactions/summary/data",
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    setSummary(res.data);
+    try {
+      const res = await axios.get(
+        `${API}/api/transactions/summary/data`,
+        authHeader
+      );
+      setSummary(res.data);
+    } catch (error) {
+      console.error("Fetch summary error:", error);
+    }
   };
 
   const addTransaction = async () => {
@@ -41,33 +66,41 @@ const Dashboard = () => {
 
     const newTransaction = { title, amount, category, date, notes };
 
-    const res = await axios.post(
-      "https://expense-tracker-icua.onrender.com/api/transactions",
-      newTransaction,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      const res = await axios.post(
+        `${API}/api/transactions`,
+        newTransaction,
+        authHeader
+      );
 
-    setTransactions([...transactions, res.data]);
-    fetchSummary();
+      setTransactions([...transactions, res.data]);
+      fetchSummary();
 
-    setTitle("");
-    setAmount("");
-    setDate("");
-    setNotes("");
+      setTitle("");
+      setAmount("");
+      setDate("");
+      setNotes("");
+    } catch (error) {
+      console.error("Add transaction error:", error);
+      alert("Unauthorized. Please login again.");
+    }
   };
 
   const deleteTransaction = async (id) => {
-    await axios.delete(`https://expense-tracker-icua.onrender.com/api/transactions/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    setTransactions(transactions.filter(t => t._id !== id));
-    fetchSummary();
+    try {
+      await axios.delete(`${API}/api/transactions/${id}`, authHeader);
+      setTransactions(transactions.filter((t) => t._id !== id));
+      fetchSummary();
+    } catch (error) {
+      console.error("Delete error:", error);
+      alert("Unauthorized action");
+    }
   };
 
-  const filteredTransactions = transactions.filter(t =>
-    t.title.toLowerCase().includes(search.toLowerCase()) &&
-    (category === "All" || t.category === category)
+  const filteredTransactions = transactions.filter(
+    (t) =>
+      t.title.toLowerCase().includes(search.toLowerCase()) &&
+      (category === "All" || t.category === category)
   );
 
   return (
@@ -79,8 +112,10 @@ const Dashboard = () => {
 
       <h4>Category Breakdown:</h4>
       <ul>
-        {Object.keys(summary.categories).map(cat => (
-          <li key={cat}>{cat} : ₹ {summary.categories[cat]}</li>
+        {Object.keys(summary.categories).map((cat) => (
+          <li key={cat}>
+            {cat} : ₹ {summary.categories[cat]}
+          </li>
         ))}
       </ul>
 
@@ -88,11 +123,19 @@ const Dashboard = () => {
 
       {/* ADD TRANSACTION */}
       <h3>Add Transaction</h3>
-      <input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
-      <input placeholder="Amount" value={amount} onChange={e => setAmount(e.target.value)} />
-      <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+      <input
+        placeholder="Title"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+      />
+      <input
+        placeholder="Amount"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+      />
+      <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
 
-      <select onChange={e => setCategory(e.target.value)}>
+      <select value={category} onChange={(e) => setCategory(e.target.value)}>
         <option>Food</option>
         <option>Rent</option>
         <option>Travel</option>
@@ -100,7 +143,11 @@ const Dashboard = () => {
         <option>Other</option>
       </select>
 
-      <input placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)} />
+      <input
+        placeholder="Notes"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+      />
       <button onClick={addTransaction}>Add</button>
 
       <hr />
@@ -109,10 +156,10 @@ const Dashboard = () => {
       <input
         placeholder="Search transaction"
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
       />
 
-      <select onChange={e => setCategory(e.target.value)}>
+      <select onChange={(e) => setCategory(e.target.value)}>
         <option value="All">All</option>
         <option>Food</option>
         <option>Rent</option>
@@ -126,9 +173,10 @@ const Dashboard = () => {
       <ul>
         {filteredTransactions.length === 0 && <p>No transactions found</p>}
 
-        {filteredTransactions.map(t => (
+        {filteredTransactions.map((t) => (
           <li key={t._id}>
-            {t.title} - ₹{t.amount} - {t.category} - {t.date.slice(0,10)}
+            {t.title} - ₹{t.amount} - {t.category} -{" "}
+            {t.date.slice(0, 10)}
             <button onClick={() => deleteTransaction(t._id)}>Delete</button>
           </li>
         ))}
@@ -138,3 +186,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
