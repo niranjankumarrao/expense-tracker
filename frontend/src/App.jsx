@@ -11,6 +11,16 @@ function App() {
       <Route path="/register" element={<Register />} />
 
       <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* optional default route */}
+      <Route
         path="/"
         element={
           <ProtectedRoute>
@@ -23,4 +33,3 @@ function App() {
 }
 
 export default App;
-
